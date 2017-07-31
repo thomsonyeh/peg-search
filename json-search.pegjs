@@ -17,6 +17,25 @@
   function quotes (s) {
     return '"' + s + '"';
   }
+
+  function wrap (tag) {
+    return function (contents) {
+      var wrapped = {};
+      wrapped[tag] = contents;
+      return wrapped;
+    };
+  }
+
+  var lt = wrap('$lt');
+  var gt = wrap('$gt');
+  var leq = wrap('$leq');
+  var geq = wrap('$geq');
+  var len = wrap('$len');
+  var quoted = wrap('$quoted');
+
+  var AND = wrap('$AND');
+  var OR = wrap('$OR');
+  var NOT = wrap('$NOT');
 }
 
 
@@ -27,25 +46,20 @@ start
 compoundTerm = disjunctive
 
 disjunctive
-  = ts:(conjunctive __ 'OR' __)+ t:conjunctive { return { '$OR': concatTo(ts.map(nth(0)), [t]) }; }
+  = ts:(conjunctive __ 'OR' __)+ t:conjunctive { return OR( collectSpacedItems(ts, t) ); }
   / conjunctive
 
 conjunctive
-  = ts:((neg __ 'AND' __)/(neg __))+ t:neg { return { '$AND': concatTo(ts.map(nth(0)), [t]) }; }
-  / neg
-
-spaced
-  = t:neg ts:(__ neg)+ { return { '$AND': concatTo([t], ts.map(nth(1))) }; }
+  = ts:((neg __ 'AND' __)/(neg __ !('OR')))+ t:neg { return AND( collectSpacedItems(ts, t) ); }
   / neg
 
 neg
-  = '!' _ t:neg { return { '$NOT': t }; }
+  = '!' _ t:neg { return NOT( t ); }
   / term
 
 term 
   = simpleTerm
   / '(' _ t:compoundTerm _ ')' { return t; }
-  // '!' _ t:compoundTerm { return { '$NOT': t }; }
 
 simpleTerm = (! reservedWord)
   t:( compareCondition / lenCondition / quoted / bool / word / num ) { return t; }
@@ -55,19 +69,19 @@ reservedWord = 'AND' / 'OR' / '!' / '(' / ')'
 
 
 compareCondition
-  = '<=' _ c:comparable { return { '$leq': c }; } 
-  / '>=' _ c:comparable { return { '$geq': c }; }
-  / '<' _ c:comparable { return { '$lt': c }; }
-  / '>' _ c:comparable { return { '$gt': c }; }
+  = '<=' _ c:comparable { return leq( c ); } 
+  / '>=' _ c:comparable { return geq( c ); }
+  / '<' _ c:comparable { return lt( c ); }
+  / '>' _ c:comparable { return gt( c ); }
 
 comparable = lenCondition / num
 
 lenCondition
-  = 'len'i _ '(' _ i:int _ ')' { return { '$len': i }; }
+  = 'len'i _ '(' _ i:int _ ')' { return len( i ); }
 
 
 
-quoted = '"' qc:(quotedChar *) '"' { return { '$quoted': qc.join('') }; }
+quoted = '"' qc:(quotedChar *) '"' { return quoted( qc.join('') ); }
 
 quotedChar
   = escapeSeq:('\\' . ) { return JSON.parse(quotes(escapeSeq.join(''))); }
