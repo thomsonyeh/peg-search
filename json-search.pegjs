@@ -1,11 +1,11 @@
 {
-  function fst (l) {
-    return l[0];
+  function nth (i) {
+    return function (l) { return l[i]; };
   }
 
-  function collectSpacedItems (item_space_pairs, trailing_item) {
-    var items = item_space_pairs.map(fst);
-    items.push(trailing_item);
+  function collectSpacedItems (leading_item, trailing_tuples, tuple_index) {
+    var items = [leading_item];
+    items.push.apply(items, trailing_tuples.map(nth(tuple_index)));
     return items;
   }
 }
@@ -13,27 +13,33 @@
 
 
 start
-  = compoundTerm
+  = spacedTerms
 
-compoundTerm
+disjunctive
+  = '(' _ d:disjunctive _ ')' { return d; }
+  / '!' _ d:disjunctive { return d; }
+  / c:conjunctive cs:(__ 'OR' __ conjunctive)+ { return { '$OR': collectSpacedItems(t, ts, 3) }; }
+
+conjunctive
+  = '(' _ c:conjunctive
+
+/*
   = '(' _ t:compoundTerm _ ')' { return t; }
-  / ts:(spacedTerms __ 'OR' __) t:spacedTerms { return { '$OR': collectSpacedItems(ts, t) }; }
+  / '!' _ t:compoundTerm
+  // / t:compoundTerm ts:(__ 'OR' __ compoundTerm)+ { return { '$OR': collectSpacedItems(t, ts, 3) }; }
   / spacedTerms
+*/
 
 
-
-spacedTerms = t:term ts:(term __)* { return { '$AND': collectSpacedItems(ts, t) }; }
+spacedTerms = t:term ts:(__ term)* { return { '$AND': collectSpacedItems(t, ts, 1) }; }
 
 term
-  = (! reservedWord)
-  ( compareCondition
-  / lenCondition
-  / quoted
-  / bool
-  / word
-  / num )
+  = '(' _ ts:spacedTerms _ ')' { return ts; }
+  / '!' _ t:term { return { '$NOT': t }; }
+  / (! reservedWord)
+      t:( compareCondition / lenCondition / quoted / bool / word / num ) { return t; }
 
-reservedWord = 'AND' / 'OR'
+reservedWord = 'AND' / 'OR' / '!' / '(' / ')'
 
 
 compareCondition
