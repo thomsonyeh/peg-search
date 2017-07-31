@@ -39,18 +39,16 @@ spaced
   / neg
 
 neg
-  = '!' _ t:term { return { '$NOT': t }; }
+  = '!' _ t:neg { return { '$NOT': t }; }
   / term
 
 term 
   = simpleTerm
   / '(' _ t:compoundTerm _ ')' { return t; }
-  / '!' _ t:compoundTerm { return { '$NOT': t }; }
+  // '!' _ t:compoundTerm { return { '$NOT': t }; }
 
-simpleTerm
-  = '!' t:simpleTerm { return { '$NOT': t }; }
-  / (! reservedWord)
-    t:( compareCondition / lenCondition / quoted / bool / word / num ) { return t; }
+simpleTerm = (! reservedWord)
+  t:( compareCondition / lenCondition / quoted / bool / word / num ) { return t; }
 
 reservedWord = 'AND' / 'OR' / '!' / '(' / ')'
 
