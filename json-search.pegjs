@@ -22,25 +22,27 @@
 
 
 start
-  = spacedTerms
+  = compoundTerm
 
-compoundTerm
-  = '(' _ t:compoundTerm _ ')' { return t; }
-  / '!' _ t:compoundTerm { return {'$NOT': t }; }
-  // ts:(nrc __ 'OR' __)+ t:compoundTerm { return { '$OR': concatTo(ts.map(nth(0)), [t]) }; }
-  // ts:(compoundTerm __ 'AND' __)+ t:compoundTerm { return { '$AND': concatTo(ts.map(nth(0)), [t]) }; }
-  / spacedTerms
+compoundTerm = disjunctive
 
+disjunctive
+  = ts:(conjunctive __ 'OR' __)* t:conjunctive { return { '$OR': concatTo(ts.map(nth(0)), [t]) }; }
 
+conjunctive
+  = ts:(term __ 'AND' __)* t:term { return { '$AND': concatTo(ts.map(nth(0)), [t]) }; }
 
-
-spacedTerms = t:term ts:(__ term)* { return { '$AND': concatTo([t], ts.map(nth(1))) }; }
+//spacedTerms = t:term ts:(__ term)* { return { '$AND': concatTo([t], ts.map(nth(1))) }; }
 
 term
-  = '(' _ ts:spacedTerms _ ')' { return ts; }
-  / '!' t:term { return { '$NOT': t }; }
+  = simpleTerm
+  / '(' _ t:compoundTerm _ ')' { return t; }
+  / '!' _ t:compoundTerm { return { '$NOT': t }; }
+
+simpleTerm
+  = '!' t:simpleTerm { return { '$NOT': t }; }
   / (! reservedWord)
-      t:( compareCondition / lenCondition / quoted / bool / word / num ) { return t; }
+    t:( compareCondition / lenCondition / quoted / bool / word / num ) { return t; }
 
 reservedWord = 'AND' / 'OR' / '!' / '(' / ')'
 
