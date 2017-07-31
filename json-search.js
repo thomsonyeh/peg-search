@@ -447,7 +447,7 @@ function peg$parse(input, options) {
     s0 = peg$currPos;
     s1 = [];
     s2 = peg$currPos;
-    s3 = peg$parsespaced();
+    s3 = peg$parseneg();
     if (s3 !== peg$FAILED) {
       s4 = peg$parse__();
       if (s4 !== peg$FAILED) {
@@ -479,11 +479,28 @@ function peg$parse(input, options) {
       peg$currPos = s2;
       s2 = peg$FAILED;
     }
+    if (s2 === peg$FAILED) {
+      s2 = peg$currPos;
+      s3 = peg$parseneg();
+      if (s3 !== peg$FAILED) {
+        s4 = peg$parse__();
+        if (s4 !== peg$FAILED) {
+          s3 = [s3, s4];
+          s2 = s3;
+        } else {
+          peg$currPos = s2;
+          s2 = peg$FAILED;
+        }
+      } else {
+        peg$currPos = s2;
+        s2 = peg$FAILED;
+      }
+    }
     if (s2 !== peg$FAILED) {
       while (s2 !== peg$FAILED) {
         s1.push(s2);
         s2 = peg$currPos;
-        s3 = peg$parsespaced();
+        s3 = peg$parseneg();
         if (s3 !== peg$FAILED) {
           s4 = peg$parse__();
           if (s4 !== peg$FAILED) {
@@ -515,12 +532,29 @@ function peg$parse(input, options) {
           peg$currPos = s2;
           s2 = peg$FAILED;
         }
+        if (s2 === peg$FAILED) {
+          s2 = peg$currPos;
+          s3 = peg$parseneg();
+          if (s3 !== peg$FAILED) {
+            s4 = peg$parse__();
+            if (s4 !== peg$FAILED) {
+              s3 = [s3, s4];
+              s2 = s3;
+            } else {
+              peg$currPos = s2;
+              s2 = peg$FAILED;
+            }
+          } else {
+            peg$currPos = s2;
+            s2 = peg$FAILED;
+          }
+        }
       }
     } else {
       s1 = peg$FAILED;
     }
     if (s1 !== peg$FAILED) {
-      s2 = peg$parsespaced();
+      s2 = peg$parseneg();
       if (s2 !== peg$FAILED) {
         peg$savedPos = s0;
         s1 = peg$c5(s1, s2);
@@ -534,7 +568,7 @@ function peg$parse(input, options) {
       s0 = peg$FAILED;
     }
     if (s0 === peg$FAILED) {
-      s0 = peg$parsespaced();
+      s0 = peg$parseneg();
     }
 
     return s0;
@@ -1401,9 +1435,9 @@ function peg$parse(input, options) {
       return function (l) { return l[i]; };
     }
 
-    function collectSpacedItems (leading_item, trailing_tuples, tuple_index) {
-      var items = [leading_item];
-      items.push.apply(items, trailing_tuples.map(nth(tuple_index)));
+    function collectSpacedItems (leading_tuples, trailing_item) {
+      var items = leading_tuples.map(nth(0));
+      items.push(trailing_item);
       return items;
     }
 

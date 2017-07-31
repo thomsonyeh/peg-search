@@ -3,9 +3,9 @@
     return function (l) { return l[i]; };
   }
 
-  function collectSpacedItems (leading_item, trailing_tuples, tuple_index) {
-    var items = [leading_item];
-    items.push.apply(items, trailing_tuples.map(nth(tuple_index)));
+  function collectSpacedItems (leading_tuples, trailing_item) {
+    var items = leading_tuples.map(nth(0));
+    items.push(trailing_item);
     return items;
   }
 
@@ -31,8 +31,8 @@ disjunctive
   / conjunctive
 
 conjunctive
-  = ts:(spaced __ 'AND' __)+ t:spaced { return { '$AND': concatTo(ts.map(nth(0)), [t]) }; }
-  / spaced
+  = ts:((neg __ 'AND' __)/(neg __))+ t:neg { return { '$AND': concatTo(ts.map(nth(0)), [t]) }; }
+  / neg
 
 spaced
   = t:neg ts:(__ neg)+ { return { '$AND': concatTo([t], ts.map(nth(1))) }; }
@@ -50,7 +50,7 @@ term
 simpleTerm = (! reservedWord)
   t:( compareCondition / lenCondition / quoted / bool / word / num ) { return t; }
 
-reservedWord = 'AND' / 'OR' / '!' / '(' / ')'
+reservedWord = 'AND' / 'OR' / '!' / '(' / ')' 
 
 
 
