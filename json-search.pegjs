@@ -1,14 +1,39 @@
+{
+  function fst (l) {
+    return l[0];
+  }
+
+  function collectSpacedItems (item_space_pairs, trailing_item) {
+    var items = item_space_pairs.map(fst);
+    items.push(trailing_item);
+    return items;
+  }
+}
+
+
+
 start
-  = (term __)* term
+  = compoundTerm
+
+compoundTerm
+  = '(' _ t:compoundTerm _ ')' { return t; }
+  / ts:(spacedTerms __ 'OR' __) t:spacedTerms { return { '$OR': collectSpacedItems(ts, t) }; }
+  / spacedTerms
+
+
+
+spacedTerms = t:term ts:(term __)* { return { '$AND': collectSpacedItems(ts, t) }; }
 
 term
-  = compareCondition
+  = (! reservedWord)
+  ( compareCondition
   / lenCondition
   / quoted
   / bool
   / word
-  / num
+  / num )
 
+reservedWord = 'AND' / 'OR'
 
 
 compareCondition
