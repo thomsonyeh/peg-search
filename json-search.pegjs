@@ -27,14 +27,22 @@ start
 compoundTerm = disjunctive
 
 disjunctive
-  = ts:(conjunctive __ 'OR' __)* t:conjunctive { return { '$OR': concatTo(ts.map(nth(0)), [t]) }; }
+  = ts:(conjunctive __ 'OR' __)+ t:conjunctive { return { '$OR': concatTo(ts.map(nth(0)), [t]) }; }
+  / conjunctive
 
 conjunctive
-  = ts:(term __ 'AND' __)* t:term { return { '$AND': concatTo(ts.map(nth(0)), [t]) }; }
+  = ts:(spaced __ 'AND' __)+ t:spaced { return { '$AND': concatTo(ts.map(nth(0)), [t]) }; }
+  / spaced
 
-//spacedTerms = t:term ts:(__ term)* { return { '$AND': concatTo([t], ts.map(nth(1))) }; }
+spaced
+  = t:neg ts:(__ neg)+ { return { '$AND': concatTo([t], ts.map(nth(1))) }; }
+  / neg
 
-term
+neg
+  = '!' _ t:term { return { '$NOT': t }; }
+  / term
+
+term 
   = simpleTerm
   / '(' _ t:compoundTerm _ ')' { return t; }
   / '!' _ t:compoundTerm { return { '$NOT': t }; }
@@ -45,6 +53,7 @@ simpleTerm
     t:( compareCondition / lenCondition / quoted / bool / word / num ) { return t; }
 
 reservedWord = 'AND' / 'OR' / '!' / '(' / ')'
+
 
 
 compareCondition
