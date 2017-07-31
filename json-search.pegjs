@@ -8,6 +8,11 @@
     items.push.apply(items, trailing_tuples.map(nth(tuple_index)));
     return items;
   }
+
+  function concatTo (l1, l2) {
+    l1.push.apply(l1, l2);
+    return l1;
+  }
 }
 
 
@@ -15,23 +20,17 @@
 start
   = spacedTerms
 
-disjunctive
-  = '(' _ d:disjunctive _ ')' { return d; }
-  / '!' _ d:disjunctive { return d; }
-  / c:conjunctive cs:(__ 'OR' __ conjunctive)+ { return { '$OR': collectSpacedItems(t, ts, 3) }; }
-
-conjunctive
-  = '(' _ c:conjunctive
-
-/*
+compoundTerm
   = '(' _ t:compoundTerm _ ')' { return t; }
-  / '!' _ t:compoundTerm
-  // / t:compoundTerm ts:(__ 'OR' __ compoundTerm)+ { return { '$OR': collectSpacedItems(t, ts, 3) }; }
+  / '!' _ t:compoundTerm { return {'$NOT': t }; }
+  / ts:(compoundTerm __ 'OR' __)+ t:compoundTerm { return { '$OR': concatTo(ts.map(nth(0)), [t]) }; }
+  / ts:(compoundTerm __ 'AND' __)+ t:compoundTerm { return { '$AND': concatTo(ts.map(nth(0)), [t]) }; }
   / spacedTerms
-*/
 
 
-spacedTerms = t:term ts:(__ term)* { return { '$AND': collectSpacedItems(t, ts, 1) }; }
+
+
+spacedTerms = t:term ts:(__ term)* { return { '$AND': concatTo([t], ts.map(nth(1))) }; }
 
 term
   = '(' _ ts:spacedTerms _ ')' { return ts; }
