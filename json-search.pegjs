@@ -13,6 +13,10 @@
     l1.push.apply(l1, l2);
     return l1;
   }
+
+  function quotes (s) {
+    return '"' + s + '"';
+  }
 }
 
 
@@ -23,8 +27,8 @@ start
 compoundTerm
   = '(' _ t:compoundTerm _ ')' { return t; }
   / '!' _ t:compoundTerm { return {'$NOT': t }; }
-  / ts:(compoundTerm __ 'OR' __)+ t:compoundTerm { return { '$OR': concatTo(ts.map(nth(0)), [t]) }; }
-  / ts:(compoundTerm __ 'AND' __)+ t:compoundTerm { return { '$AND': concatTo(ts.map(nth(0)), [t]) }; }
+  // ts:(nrc __ 'OR' __)+ t:compoundTerm { return { '$OR': concatTo(ts.map(nth(0)), [t]) }; }
+  // ts:(compoundTerm __ 'AND' __)+ t:compoundTerm { return { '$AND': concatTo(ts.map(nth(0)), [t]) }; }
   / spacedTerms
 
 
@@ -34,7 +38,7 @@ spacedTerms = t:term ts:(__ term)* { return { '$AND': concatTo([t], ts.map(nth(1
 
 term
   = '(' _ ts:spacedTerms _ ')' { return ts; }
-  / '!' _ t:term { return { '$NOT': t }; }
+  / '!' t:term { return { '$NOT': t }; }
   / (! reservedWord)
       t:( compareCondition / lenCondition / quoted / bool / word / num ) { return t; }
 
@@ -57,9 +61,8 @@ lenCondition
 quoted = '"' qc:(quotedChar *) '"' { return { '$quoted': qc.join('') }; }
 
 quotedChar
-  = '\\' escaped:. { return unescape('\\' + escaped); }
-  / $([^"])
-
+  = escapeSeq:('\\' . ) { return JSON.parse(quotes(escapeSeq.join(''))); }
+  / [^"\\]
 
 
 bool
