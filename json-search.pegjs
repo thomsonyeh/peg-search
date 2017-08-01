@@ -88,6 +88,7 @@ quotedChar
   / [^"\\]
 
 
+
 bool
   = 'true' { return true; }
   / 'false' { return false; }
@@ -96,9 +97,9 @@ bool
 
 word = $(wordFirstChar (wordChar *)) // $ returns just the literal text matched
 
-wordFirstChar = (! whitespace) [^0-9.] 
+wordFirstChar = (! whitespace) [^0-9.()] 
 
-wordChar = (! whitespace) .
+wordChar = wordFirstChar / [0-9.]
 
 
 
